@@ -433,13 +433,32 @@ var DEFAULT_SCHEDULE = {
   dimanche:'🛌 Repos'
 };
 
-var DB_NAME='WhiteWolfDB', STORE_NAME='data', db=null;
-function openDB(){return new Promise(function(res,rej){var req=indexedDB.open(DB_NAME,2);req.onupgradeneeded=function(ev){var d=ev.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME,{keyPath:'key'});if(!d.objectStoreNames.contains('resourceFiles'))d.createObjectStore('resourceFiles',{keyPath:'key'})};req.onsuccess=function(ev){db=ev.target.result;res(db)};req.onerror=function(ev){rej(ev.target.error)}})}
-function dbGet(k){return new Promise(function(res,rej){var tx=db.transaction(STORE_NAME,'readonly');var s=tx.objectStore(STORE_NAME);var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}})}
-function dbSet(k,v){return new Promise(function(res,rej){var tx=db.transaction(STORE_NAME,'readwrite');var s=tx.objectStore(STORE_NAME);var r=s.put({key:k,value:v});r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}})}
-function fileSet(k,v){return new Promise(function(res,rej){var tx=db.transaction('resourceFiles','readwrite');var s=tx.objectStore('resourceFiles');var r=s.put({key:k,value:v});r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}})}
-function fileGet(k){return new Promise(function(res,rej){var tx=db.transaction('resourceFiles','readonly');var s=tx.objectStore('resourceFiles');var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}})}
-function fileDelete(k){return new Promise(function(res,rej){var tx=db.transaction('resourceFiles','readwrite');var s=tx.objectStore('resourceFiles');var r=s.delete(k);r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}})}
+var DB_NAME='WhiteWolfDB', STORE_NAME='data', db=null, dbUnavailable=false;
+var DB_FALLBACK_KEY='wwAppStateFallback';
+function openDB(){
+  return new Promise(function(res,rej){
+    if(!window.indexedDB){dbUnavailable=true;rej(new Error('IndexedDB indisponible'));return}
+    var settled=false;
+    var timer=setTimeout(function(){if(settled)return;settled=true;dbUnavailable=true;console.warn('White Wolf: IndexedDB timeout, fallback localStorage activé.');rej(new Error('IndexedDB timeout'))},5000);
+    var req;
+    try{req=indexedDB.open(DB_NAME,2)}catch(e){clearTimeout(timer);dbUnavailable=true;rej(e);return}
+    req.onupgradeneeded=function(ev){var d=ev.target.result;if(!d.objectStoreNames.contains(STORE_NAME))d.createObjectStore(STORE_NAME,{keyPath:'key'});if(!d.objectStoreNames.contains('resourceFiles'))d.createObjectStore('resourceFiles',{keyPath:'key'})};
+    req.onblocked=function(){console.warn('White Wolf: IndexedDB bloquée par une ancienne connexion.');};
+    req.onsuccess=function(ev){if(settled){try{ev.target.result.close()}catch(e){}return}settled=true;clearTimeout(timer);db=ev.target.result;dbUnavailable=false;db.onversionchange=function(){try{db.close()}catch(e){}};res(db)};
+    req.onerror=function(ev){if(settled)return;settled=true;clearTimeout(timer);dbUnavailable=true;rej(ev.target.error||new Error('IndexedDB error'))};
+  })
+}
+function dbGet(k){
+  if(dbUnavailable||!db){return Promise.resolve(k=== 'appState' ? (function(){try{var raw=localStorage.getItem(DB_FALLBACK_KEY);return raw?JSON.parse(raw):null}catch(e){return null}})() : null)}
+  return new Promise(function(res,rej){try{var tx=db.transaction(STORE_NAME,'readonly');var s=tx.objectStore(STORE_NAME);var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})
+}
+function dbSet(k,v){
+  if(dbUnavailable||!db){if(k==='appState'){try{localStorage.setItem(DB_FALLBACK_KEY,JSON.stringify(v))}catch(e){}}return Promise.resolve()}
+  return new Promise(function(res,rej){try{var tx=db.transaction(STORE_NAME,'readwrite');var s=tx.objectStore(STORE_NAME);var r=s.put({key:k,value:v});r.onsuccess=function(){try{if(k==='appState')localStorage.setItem(DB_FALLBACK_KEY,JSON.stringify(v))}catch(e){}res()};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})
+}
+function fileSet(k,v){return new Promise(function(res,rej){if(!db||dbUnavailable){rej(new Error('Stockage de fichiers indisponible sur ce navigateur'));return}try{var tx=db.transaction('resourceFiles','readwrite');var s=tx.objectStore('resourceFiles');var r=s.put({key:k,value:v});r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
+function fileGet(k){return new Promise(function(res,rej){if(!db||dbUnavailable){rej(new Error('Stockage de fichiers indisponible'));return}try{var tx=db.transaction('resourceFiles','readonly');var s=tx.objectStore('resourceFiles');var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
+function fileDelete(k){return new Promise(function(res,rej){if(!db||dbUnavailable){res();return}try{var tx=db.transaction('resourceFiles','readwrite');var s=tx.objectStore('resourceFiles');var r=s.delete(k);r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
 function supportsFileSystemAccess(){return typeof window.showOpenFilePicker==='function'}
 async function pickPersistentFile(){
   if(!supportsFileSystemAccess()) return null;
@@ -1444,7 +1463,24 @@ wwReaderInit();
 document.addEventListener('keydown',wwReaderEscape);
 wwInitPWA();
 
-async function init(){try{await openDB();await loadState();wwUpgradeIcons(document.body);render()}catch(e){console.error('Init error:',e);var root=document.getElementById('root');if(root)root.innerHTML='<div style="padding:20px;color:#e86a6a;"><h2>⚠️ Erreur</h2><pre>'+e.message+'</pre><button onclick="location.reload()">Recharger</button></div>'}}
+function renderBootStatus(message,detail){
+  var root=document.getElementById('root');
+  if(!root)return;
+  root.innerHTML='<div class="ww-boot-screen"><div class="ww-boot-mark">🐺</div><h1>WHITE WOLF</h1><p>'+message+'</p>'+(detail?'<small>'+detail+'</small>':'')+'<div class="ww-boot-actions"><button type="button" onclick="location.reload()">↻ Réessayer</button><button type="button" onclick="try{localStorage.removeItem(\'wwAppStateFallback\')}catch(e){};location.reload()">Réinitialiser le cache local</button></div></div>';
+  wwUpgradeIcons(root);
+}
+async function init(){
+  renderBootStatus('Initialisation du système…','Connexion au stockage local sécurisé.');
+  try{
+    await openDB();
+    await loadState();
+    wwUpgradeIcons(document.body);
+    render();
+  }catch(e){
+    console.warn('Init storage warning:',e);
+    try{await loadState();render();showToast('⚠️ Mode compatibilité activé — données locales sauvegardées')}catch(e2){console.error('Init error:',e2);renderBootStatus('Impossible de démarrer White Wolf','Le stockage du navigateur ne répond pas. Ferme les autres onglets White Wolf puis réessaie.');}
+  }
+}
 
 init();
 

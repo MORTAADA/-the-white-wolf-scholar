@@ -1324,3 +1324,13 @@ body.ww-search-lock{overflow:hidden!important}.ww-global-search-trigger{font-siz
   .ww-exam-prep-btn{width:36px;height:36px;flex-basis:36px}
 }
 @media(max-width:380px){.ww-mission-head{gap:6px}.ww-mission-percent{font-size:16px}.ww-prep-countdown{font-size:24px}.ww-prep-grid{grid-template-columns:1fr 1fr}.ww-prep-stat:last-child{grid-column:1/-1}}
+
+/* V48.1 — startup/recovery screen for slow or blocked mobile storage */
+.ww-boot-screen{min-height:calc(100vh - 90px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px 22px;color:#dcecff}
+.ww-boot-mark{width:74px;height:74px;border-radius:24px;display:grid;place-items:center;background:rgba(22,124,255,.12);border:1px solid rgba(75,123,236,.45);font-size:34px;box-shadow:0 0 34px rgba(22,124,255,.12);margin-bottom:18px}
+.ww-boot-screen h1{font-size:19px;letter-spacing:3px;margin-bottom:10px}
+.ww-boot-screen p{font-size:13px;color:#a9bfd9;max-width:360px;line-height:1.55}
+.ww-boot-screen small{display:block;margin-top:8px;font-size:10px;color:#647b98;max-width:360px;line-height:1.5}
+.ww-boot-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.ww-boot-actions button{border:1px solid #2a557d;background:#102b46;color:#dcecff;padding:10px 14px;border-radius:10px;font-size:12px}
+.ww-boot-actions button+button{border-color:#513e3e;background:#281b1b;color:#e5caca}
