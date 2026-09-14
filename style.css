@@ -1273,3 +1273,54 @@ body.ww-search-lock{overflow:hidden!important}.ww-global-search-trigger{font-siz
 .ww-library-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}.ww-library-stats>div{padding:12px;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.025)}.ww-library-stats b{display:block;font-size:19px}.ww-library-stats span{font-size:9px;color:#6f8097;text-transform:uppercase;letter-spacing:.08em}
 .ww-lib-section{margin-top:18px}.ww-lib-section h3{margin:0 0 10px;font-size:12px;color:#cbd7e8}.ww-lib-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ww-lib-card{position:relative;display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid rgba(255,255,255,.06);border-radius:14px;background:rgba(255,255,255,.025)}.ww-lib-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:rgba(75,123,236,.09);flex:0 0 auto}.ww-lib-card-body{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}.ww-lib-card-body strong{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ww-lib-card-body span,.ww-lib-card-body small{font-size:9px;color:#718198;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ww-lib-open{border:0;border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.06);color:#dce8fa;font-size:9px;cursor:pointer}.ww-lib-star{position:absolute;right:6px;top:5px;border:0;background:transparent;color:#45566e;font-size:13px;cursor:pointer}.ww-lib-star.active{color:#e8cc6a}.ww-lib-card-body{padding-right:8px}
 @media(max-width:680px){.ww-global-search.is-open{padding:0}.ww-gs-panel{max-height:100vh;height:100%;border-radius:0}.ww-library-head{align-items:flex-start;flex-direction:column}.ww-lib-search{width:100%}.ww-library-stats{grid-template-columns:repeat(2,1fr)}.ww-lib-grid{grid-template-columns:1fr}.ww-library-wrap{border-radius:18px;padding:13px}}
+
+/* V46 — flexible Pomodoro / free timer controls */
+.pomo-settings{margin:14px auto 2px;max-width:520px;padding:12px;border:1px solid #263750;border-radius:14px;background:rgba(8,16,28,.72);text-align:left}
+.pomo-settings-title{font-size:12px;font-weight:700;letter-spacing:.4px;color:#9fb5d1;margin-bottom:9px;text-transform:uppercase}
+.pomo-duration-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pomo-duration-grid label{font-size:11px;color:#8ba2c0;display:grid;gap:5px}
+.pomo-duration-grid input{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #2a3b55;border-radius:9px;background:#0c1522;color:#e6eef8;font-size:14px;outline:none}
+.pomo-duration-grid input:focus{border-color:#4b7bec;box-shadow:0 0 0 2px rgba(75,123,236,.12)}
+.pomo-free-toggle{display:flex;align-items:flex-start;gap:8px;margin:10px 0;color:#9fb5d1;font-size:11px;line-height:1.45;cursor:pointer}
+.pomo-free-toggle input{margin-top:2px;accent-color:#4b7bec}
+.btn-pomo-apply{width:100%;padding:9px 12px;border:1px solid #31527e;border-radius:9px;background:#14243a;color:#a9c8f2;font-size:12px;font-weight:700;cursor:pointer}
+.btn-pomo-apply:hover{background:#19304e}
+@media(max-width:520px){.pomo-duration-grid{grid-template-columns:1fr 1fr}.pomo-settings{margin-left:2px;margin-right:2px}}
+
+/* V47 — Dashboard upcoming exams */
+.ww-dashboard-exams{padding:14px!important;border-color:rgba(58,137,244,.25)!important;background:linear-gradient(145deg,rgba(8,20,35,.88),rgba(5,13,24,.94))!important}
+.ww-exams-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.ww-exams-sub{font-size:11px;color:#6b7f9a;margin-top:-5px}
+.ww-dashboard-exam{display:flex;align-items:center;gap:10px;padding:11px 9px;border:1px solid rgba(52,103,166,.18);border-radius:12px;background:rgba(8,18,31,.58);margin-top:7px;cursor:pointer;transition:.18s ease}
+.ww-dashboard-exam:hover{border-color:rgba(47,151,255,.45);transform:translateY(-1px)}
+.ww-exam-next{box-shadow:inset 3px 0 0 #4b7bec,0 8px 22px rgba(0,70,150,.12)}
+.ww-exam-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:rgba(75,123,236,.12);font-size:17px;flex:0 0 34px}
+.ww-exam-main{min-width:0;flex:1}
+.ww-exam-title{font-size:13px;font-weight:650;color:#e5eefb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ww-exam-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;color:#7187a3;font-size:10px}
+.ww-exam-meta-item{white-space:nowrap}
+.ww-exam-countdown{font-size:10px;font-weight:650;color:#8ba2c0;padding:5px 8px;border-radius:999px;background:#152235;white-space:nowrap}
+.ww-exam-countdown.primary{color:#8fbfff;background:rgba(22,124,255,.14);border:1px solid rgba(47,151,255,.2)}
+@media(max-width:600px){
+  .ww-dashboard-exam{align-items:flex-start}
+  .ww-exam-countdown{font-size:9px;padding:4px 6px}
+  .ww-exam-meta{display:block}
+  .ww-exam-meta-item{display:inline-block;margin-right:7px;margin-top:2px}
+}
+
+/* ============================================================
+   WHITE WOLF V48 — DAILY MISSION / EXAM MODE / PWA MOBILE
+   Additive styles only — existing pages and navigation preserved.
+   ============================================================ */
+.ww-daily-mission{background:linear-gradient(145deg,rgba(11,30,50,.94),rgba(7,17,29,.94));border-color:rgba(52,143,235,.34);box-shadow:0 14px 36px rgba(0,60,130,.13)}
+.ww-mission-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.ww-mission-head .card-title{margin-bottom:3px}.ww-exams-sub{font-size:11px;color:#6f87a5}.ww-mission-percent{font-size:18px;font-weight:800;color:#5dc8ff;white-space:nowrap}.ww-mission-bar{height:7px;background:#16283c;border-radius:20px;overflow:hidden;margin:10px 0 7px}.ww-mission-bar>div{height:100%;border-radius:20px;background:linear-gradient(90deg,#167cff,#28c9ff);box-shadow:0 0 12px rgba(40,201,255,.2);transition:width .3s}.ww-mission-label{font-size:11px;color:#8ba2c0;margin-bottom:8px}.ww-mission-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(45,95,145,.18)}.ww-mission-check{width:30px;height:30px;padding:0;border:1px solid #2c557d;border-radius:50%;color:#8fc9f5;display:flex;align-items:center;justify-content:center;flex:0 0 30px;background:rgba(14,35,56,.8);font-size:16px}.ww-mission-item.is-done .ww-mission-check{background:#123b42;border-color:#3fbf9a;color:#6ae8a5}.ww-mission-text{font-size:13px;color:#dcecff;line-height:1.35}.ww-mission-item.is-done .ww-mission-text{text-decoration:line-through;color:#6f87a5}.ww-exam-prep-btn{width:34px;height:34px;padding:0;flex:0 0 34px;border:1px solid rgba(70,145,220,.35);background:rgba(12,32,52,.8);display:flex;align-items:center;justify-content:center}.ww-exam-prep-btn:hover{border-color:#4fb7ff;background:#12314d}.ww-exam-prep-modal{max-width:560px}.ww-prep-kicker{font-size:10px;letter-spacing:1.6px;color:#5cbcff;margin-bottom:8px}.ww-prep-countdown{font-size:28px;font-weight:800;color:#e8cc6a;margin:8px 0}.ww-prep-date{font-size:12px;color:#8ba2c0}.ww-prep-subject{margin-top:10px;font-size:13px;color:#cfe5ff}.ww-prep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0}.ww-prep-stat{background:rgba(11,25,40,.75);border:1px solid rgba(53,108,161,.25);border-radius:12px;padding:12px 8px;text-align:center}.ww-prep-stat strong{display:block;font-size:18px;color:#dcecff}.ww-prep-stat span{display:block;font-size:10px;color:#7189a7;margin-top:4px}.ww-prep-section{margin-top:14px;padding-top:12px;border-top:1px solid #1b2b3d}.ww-prep-section-title{font-size:12px;font-weight:700;color:#bcd7f5;margin-bottom:8px}.ww-prep-topic{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center;padding:8px 0}.ww-prep-topic>div:first-child{font-size:12px;color:#dcecff}.ww-prep-topic span{font-size:10px;color:#6f87a5}.ww-prep-topic-bar{height:5px;background:#18293b;border-radius:10px;overflow:hidden}.ww-prep-topic-bar i{display:block;height:100%;background:linear-gradient(90deg,#4b7bec,#6ae8a5);border-radius:10px}.ww-prep-plan-item{font-size:12px;color:#a9bfd9;padding:7px 0;border-bottom:1px solid rgba(45,95,145,.14)}.ww-prep-note{margin-top:14px;padding:10px;border-radius:10px;background:rgba(15,31,48,.72);border:1px solid rgba(53,108,161,.18);font-size:10px;line-height:1.5;color:#6f87a5}.ww-pwa-install{display:flex;align-items:center;justify-content:center;width:100%;margin:0 0 12px;padding:11px 14px;border-radius:12px;border:1px solid rgba(65,157,245,.4);background:linear-gradient(135deg,#12375b,#0b2743);color:#dcecff;font-size:12px;font-weight:700;box-shadow:0 8px 24px rgba(0,70,140,.16)}
+
+@media(max-width:600px){
+  body{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  .app{padding-bottom:calc(92px + env(safe-area-inset-bottom));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+  .bottom-nav{padding-bottom:max(8px,env(safe-area-inset-bottom));padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+  .ww-prep-grid{gap:6px}.ww-prep-stat{padding:10px 5px}.ww-prep-stat strong{font-size:16px}
+  .ww-prep-topic{grid-template-columns:1fr 70px}
+  .ww-exam-prep-btn{width:36px;height:36px;flex-basis:36px}
+}
+@media(max-width:380px){.ww-mission-head{gap:6px}.ww-mission-percent{font-size:16px}.ww-prep-countdown{font-size:24px}.ww-prep-grid{grid-template-columns:1fr 1fr}.ww-prep-stat:last-child{grid-column:1/-1}}
