@@ -448,13 +448,67 @@ function openDB(){
     req.onerror=function(ev){if(settled)return;settled=true;clearTimeout(timer);dbUnavailable=true;rej(ev.target.error||new Error('IndexedDB error'))};
   })
 }
+function wwReadFallbackState(){
+  try{
+    var raw=localStorage.getItem(DB_FALLBACK_KEY);
+    return raw?JSON.parse(raw):null;
+  }catch(e){return null}
+}
+function wwWriteFallbackState(v){
+  try{localStorage.setItem(DB_FALLBACK_KEY,JSON.stringify(v));return true}catch(e){console.warn('White Wolf fallback write failed:',e);return false}
+}
 function dbGet(k){
-  if(dbUnavailable||!db){return Promise.resolve(k=== 'appState' ? (function(){try{var raw=localStorage.getItem(DB_FALLBACK_KEY);return raw?JSON.parse(raw):null}catch(e){return null}})() : null)}
-  return new Promise(function(res,rej){try{var tx=db.transaction(STORE_NAME,'readonly');var s=tx.objectStore(STORE_NAME);var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})
+  if(dbUnavailable||!db){
+    return Promise.resolve(k==='appState'?wwReadFallbackState():null);
+  }
+  return new Promise(function(res,rej){
+    var finished=false;
+    function fallbackOrReject(err){
+      if(finished)return;
+      if(k==='appState'){
+        var fallback=wwReadFallbackState();
+        if(fallback!==null){finished=true;console.warn('White Wolf: IndexedDB read failed, using local mirror.');res(fallback);return}
+      }
+      finished=true;rej(err||new Error('IndexedDB read error'));
+    }
+    try{
+      var tx=db.transaction(STORE_NAME,'readonly');
+      var s=tx.objectStore(STORE_NAME);
+      var r=s.get(k);
+      r.onsuccess=function(){if(finished)return;finished=true;res(r.result?r.result.value:null)};
+      r.onerror=function(){fallbackOrReject(r.error)};
+      tx.onerror=function(){fallbackOrReject(tx.error)};
+      tx.onabort=function(){fallbackOrReject(tx.error||new Error('IndexedDB transaction aborted'))};
+    }catch(e){fallbackOrReject(e)}
+  })
 }
 function dbSet(k,v){
-  if(dbUnavailable||!db){if(k==='appState'){try{localStorage.setItem(DB_FALLBACK_KEY,JSON.stringify(v))}catch(e){}}return Promise.resolve()}
-  return new Promise(function(res,rej){try{var tx=db.transaction(STORE_NAME,'readwrite');var s=tx.objectStore(STORE_NAME);var r=s.put({key:k,value:v});r.onsuccess=function(){try{if(k==='appState')localStorage.setItem(DB_FALLBACK_KEY,JSON.stringify(v))}catch(e){}res()};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})
+  if(dbUnavailable||!db){
+    if(k==='appState')wwWriteFallbackState(v);
+    return Promise.resolve();
+  }
+  return new Promise(function(res,rej){
+    var settled=false;
+    function fallbackOrReject(err){
+      if(settled)return;
+      if(k==='appState'&&wwWriteFallbackState(v)){settled=true;console.warn('White Wolf: IndexedDB write failed, local mirror updated.');res();return}
+      settled=true;rej(err||new Error('IndexedDB write error'));
+    }
+    try{
+      var tx=db.transaction(STORE_NAME,'readwrite');
+      var s=tx.objectStore(STORE_NAME);
+      var r=s.put({key:k,value:v});
+      r.onsuccess=function(){
+        if(settled)return;
+        settled=true;
+        if(k==='appState')wwWriteFallbackState(v);
+        res();
+      };
+      r.onerror=function(){fallbackOrReject(r.error)};
+      tx.onerror=function(){fallbackOrReject(tx.error)};
+      tx.onabort=function(){fallbackOrReject(tx.error||new Error('IndexedDB transaction aborted'))};
+    }catch(e){fallbackOrReject(e)}
+  })
 }
 function fileSet(k,v){return new Promise(function(res,rej){if(!db||dbUnavailable){rej(new Error('Stockage de fichiers indisponible sur ce navigateur'));return}try{var tx=db.transaction('resourceFiles','readwrite');var s=tx.objectStore('resourceFiles');var r=s.put({key:k,value:v});r.onsuccess=function(){res()};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
 function fileGet(k){return new Promise(function(res,rej){if(!db||dbUnavailable){rej(new Error('Stockage de fichiers indisponible'));return}try{var tx=db.transaction('resourceFiles','readonly');var s=tx.objectStore('resourceFiles');var r=s.get(k);r.onsuccess=function(){res(r.result?r.result.value:null)};r.onerror=function(){rej(r.error)}}catch(e){rej(e)}})}
@@ -1463,14 +1517,29 @@ wwReaderInit();
 document.addEventListener('keydown',wwReaderEscape);
 wwInitPWA();
 
-function renderBootStatus(message,detail){
+function renderBootStatus(message,detail,showRecovery){
   var root=document.getElementById('root');
   if(!root)return;
-  root.innerHTML='<div class="ww-boot-screen"><div class="ww-boot-mark">🐺</div><h1>WHITE WOLF</h1><p>'+message+'</p>'+(detail?'<small>'+detail+'</small>':'')+'<div class="ww-boot-actions"><button type="button" onclick="location.reload()">↻ Réessayer</button><button type="button" onclick="try{localStorage.removeItem(\'wwAppStateFallback\')}catch(e){};location.reload()">Réinitialiser le cache local</button></div></div>';
+  var actions=showRecovery===false?'':'<div class="ww-boot-actions"><button type="button" onclick="location.reload()">↻ Réessayer</button><button type="button" onclick="try{localStorage.removeItem(\'wwAppStateFallback\')}catch(e){};location.reload()">Réinitialiser le cache local</button></div>';
+  root.innerHTML='<div class="ww-boot-screen"><div class="ww-boot-mark">🐺</div><h1>WHITE WOLF</h1><p>'+String(message||'')+'</p>'+(detail?'<small>'+String(detail)+'</small>':'')+actions+'</div>';
   wwUpgradeIcons(root);
 }
+function wwInstallGlobalErrorRecovery(){
+  window.addEventListener('error',function(ev){
+    if(!ev||!ev.error)return;
+    console.error('White Wolf runtime error:',ev.error);
+    var root=document.getElementById('root');
+    if(root&&root.innerHTML.trim()===''){
+      renderBootStatus('Une erreur a empêché le chargement.','Recharge White Wolf pour réessayer.');
+    }
+  });
+  window.addEventListener('unhandledrejection',function(ev){
+    console.error('White Wolf unhandled rejection:',ev&&ev.reason);
+  });
+}
 async function init(){
-  renderBootStatus('Initialisation du système…','Connexion au stockage local sécurisé.');
+  renderBootStatus('Initialisation du système…','Connexion au stockage local sécurisé.',false);
+  wwInstallGlobalErrorRecovery();
   try{
     await openDB();
     await loadState();
@@ -1478,11 +1547,32 @@ async function init(){
     render();
   }catch(e){
     console.warn('Init storage warning:',e);
-    try{await loadState();render();showToast('⚠️ Mode compatibilité activé — données locales sauvegardées')}catch(e2){console.error('Init error:',e2);renderBootStatus('Impossible de démarrer White Wolf','Le stockage du navigateur ne répond pas. Ferme les autres onglets White Wolf puis réessaie.');}
+    try{
+      dbUnavailable=true;
+      if(db){try{db.close()}catch(closeErr){}}
+      db=null;
+      await loadState();
+      render();
+      showToast('⚠️ Mode compatibilité activé — données locales sauvegardées');
+    }catch(e2){
+      console.error('Init error:',e2);
+      renderBootStatus('Impossible de démarrer White Wolf','Le stockage du navigateur ne répond pas. Ferme les autres onglets White Wolf puis réessaie.');
+    }
   }
 }
 
 init();
+
+// If a mobile browser/PWA stalls before render(), never leave a silent blank root.
+setTimeout(function(){
+  try{
+    var root=document.getElementById('root');
+    if(root&&root.innerHTML.trim()==='' ){
+      console.warn('White Wolf startup watchdog: root still empty after 8s.');
+      renderBootStatus('Le démarrage prend trop de temps.','Vérifie la connexion puis appuie sur Réessayer.');
+    }
+  }catch(e){}
+},8000);
 
 // Public bridge for extension modules (V43/V44/V45/V46) without leaking app internals.
 window.WWV46App={state:state,navigate:navigate,langCurrentLevel:langCurrentLevel};
@@ -1824,7 +1914,7 @@ async function exportBackup(){
     setStatus("Preparing backup…");
     var payload={
       format:"white-wolf-scholar-backup",
-      version:48,
+      version:48.2,
       exportedAt:new Date().toISOString(),
       note:"Personal data backup. Local phone resource files and FileSystemFileHandles are intentionally excluded.",
       localStorage:collectLocalStorage(),

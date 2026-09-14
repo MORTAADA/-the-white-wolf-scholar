@@ -1,9 +1,9 @@
-const CACHE_NAME = "white-wolf-scholar-v48-1-shell";
+const CACHE_NAME = "white-wolf-scholar-v48-2-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css?v=48.1",
-  "./script.js?v=48.1",
+  "./style.css?v=48.2",
+  "./script.js?v=48.2",
   "./mountain-bg.jpg",
   "./logo.svg",
   "./manifest.webmanifest"
@@ -22,6 +22,8 @@ self.addEventListener("activate", event => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({type:"window", includeUncontrolled:true}))
+      .then(clients => clients.forEach(client => client.postMessage({type:"WW_V48_2_READY"})))
   );
 });
 
