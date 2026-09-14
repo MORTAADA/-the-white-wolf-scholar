@@ -1,4 +1,4 @@
-const CACHE_NAME = "white-wolf-scholar-v46-shell";
+const CACHE_NAME = "white-wolf-scholar-v48-shell";
 const APP_SHELL = [
   "./",
   "./index.html",
